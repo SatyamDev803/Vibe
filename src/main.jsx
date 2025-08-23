@@ -4,28 +4,29 @@ import App from "./App.jsx";
 import "./styles/global.css";
 
 import { WagmiProvider, createConfig, http } from "wagmi";
-import { mainnet, sepolia, polygon } from "wagmi/chains";
+import { mainnet, sepolia, polygon, bscTestnet } from "wagmi/chains";
+import { injected } from "wagmi/connectors";   // ✅ use injected connector (MetaMask, etc.)
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Setup query client
 const queryClient = new QueryClient();
 
-// Setup wagmi config (no configureChains anymore)
+// Setup wagmi config
 const config = createConfig({
-  chains: [sepolia, polygon, mainnet], // use only sepolia if you want testnet
+  chains: [sepolia, polygon, mainnet, bscTestnet], // keep only bscTestnet if you want
+  connectors: [injected()],   // ✅ add connector
   transports: {
     [sepolia.id]: http(),
     [polygon.id]: http(),
     [mainnet.id]: http(),
+    [bscTestnet.id]: http(),
   },
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
     </WagmiProvider>
-  </React.StrictMode>
 );

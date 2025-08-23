@@ -1,10 +1,52 @@
 import React, { useState } from "react";
+import { ethers } from "ethers";
+import contractABI from "../abi/UserProfile.json";
+import { motion, AnimatePresence } from "framer-motion";
+import Confetti from "react-confetti";
+
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 
 export default function Premium() {
-  const [active, setActive] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [txHash, setTxHash] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  const handlePayment = async () => {
+    try {
+      if (!window.ethereum) {
+        alert("⚠️ Please install MetaMask to continue");
+        return;
+      }
+
+      setLoading(true);
+      setSuccess(false);
+      setTxHash(null);
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, signer);
+
+      const tx = await contract.becomePremium({
+        value: ethers.parseEther("0.005"),
+      });
+
+      await tx.wait();
+      setTxHash(tx.hash);
+      setSuccess(true);
+
+    } catch (err) {
+      console.error("Payment failed:", err);
+      alert("❌ Payment failed: " + (err.reason || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto relative">
+      {success && <Confetti numberOfPieces={250} recycle={false} />}
+
       <div
         className="
           rounded-3xl border border-white/30 dark:border-gray-700/30
@@ -38,13 +80,37 @@ export default function Premium() {
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <button
-              onClick={() => setActive(true)}
-              className="px-6 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-semibold shadow-lg shadow-pink-500/30"
+              onClick={handlePayment}
+              disabled={loading}
+              className="px-6 py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-semibold shadow-lg shadow-pink-500/30 disabled:opacity-50"
             >
-              Upgrade Now
+              {loading ? "Processing..." : "Upgrade Now (0.005 BNB)"}
             </button>
-            {active && (
-              <span className="text-pink-700 dark:text-pink-300">Thanks! (demo only) 🎉</span>
+
+            {/* Loading animation */}
+            <AnimatePresence>
+              {loading && (
+                <motion.div
+                  className="ml-3 text-pink-600 font-semibold"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  ⏳ Waiting for confirmation...
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Success */}
+            {success && txHash && (
+              <a
+                href={`https://testnet.bscscan.com/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-600 dark:text-green-400 font-semibold underline"
+              >
+                🎉 Premium Activated — View on BscScan
+              </a>
             )}
           </div>
         </div>

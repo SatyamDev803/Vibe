@@ -4,8 +4,8 @@ import { injected } from "wagmi/connectors";
 
 export const wagmiConfig = createConfig({
   chains: [bscTestnet],
-  connectors: [injected()],
+  connectors: [injected()],   // ✅ use factory not class
   transports: {
-    [bscTestnet.id]: http(),
+    [bscTestnet.id]: http(import.meta.env.VITE_BNB_TESTNET_RPC),
   },
 });

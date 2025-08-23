@@ -1,46 +1,50 @@
-import React from "react";
-import {
-  useAccount,
-  useConnect,
-  useDisconnect,
-  useSignMessage,
-} from "wagmi";
-import { InjectedConnector } from "@wagmi/connectors";
+import React, { useEffect, useRef, useState } from "react";
+import { useAccount, useConnect, useDisconnect, useChainId } from "wagmi";
+import { createPortal } from "react-dom";
 
-export default function ConnectWallet({ onConnect }) {
+export default function ConnectWallet() {
   const { address, isConnected } = useAccount();
-  const { connect, isLoading } = useConnect({ connector: new InjectedConnector() });
+  const { connect, connectors, isPending, error } = useConnect();
   const { disconnect } = useDisconnect();
-  const { signMessageAsync } = useSignMessage();
+  const chainId = useChainId();
 
-  React.useEffect(() => {
-    if (isConnected && onConnect) onConnect(address);
-  }, [isConnected, address, onConnect]);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const lastAddressRef = useRef(null);
 
-  async function handleSignIn() {
-    try {
-      const signature = await signMessageAsync({
-        message: "Login to BNB Vibe",
-      });
-      console.log("Signature:", signature);
-      alert("Signed in successfully!");
-    } catch (err) {
-      console.error("Sign in failed:", err);
+  // ✅ Log state transitions once
+  useEffect(() => {
+    if (isConnected && address !== lastAddressRef.current) {
+      console.log("✅ Wallet connected");
+      console.log("   Address:", address);
+      console.log("   Chain ID:", chainId);
+      lastAddressRef.current = address;
+    } else if (!isConnected && lastAddressRef.current !== "disconnected") {
+      console.log("❌ Wallet disconnected");
+      lastAddressRef.current = "disconnected";
     }
-  }
+  }, [isConnected, address, chainId]);
+
+  // ✅ Human-readable error handling
+  useEffect(() => {
+    if (error) {
+      let msg = "Something went wrong. Please try again.";
+      if (error.message.includes("User rejected")) {
+        msg = "You cancelled the connection request.";
+      } else if (error.message.includes("No crypto wallet")) {
+        msg = "No wallet detected. Please install MetaMask.";
+      } else if (error.message.includes("Unsupported chain")) {
+        msg = "Unsupported network. Please switch to BNB Testnet.";
+      }
+      setErrorMessage(msg);
+    }
+  }, [error]);
 
   if (isConnected) {
     return (
-      <div className="flex items-center space-x-3 p-3 rounded-2xl bg-white/30 backdrop-blur-md shadow-md">
-        <button
-          onClick={handleSignIn}
-          className="bg-pink-500 text-white px-4 py-2 rounded-xl hover:bg-pink-600 transition"
-        >
-          Sign In
-        </button>
+      <div className="flex items-center space-x-3">
         <button
           onClick={() => disconnect()}
-          className="bg-gray-700 text-white px-4 py-2 rounded-xl hover:bg-gray-800 transition"
+          className="bg-red-500 text-white px-4 py-2 rounded-xl hover:bg-red-600"
         >
           {address.slice(0, 6)}…{address.slice(-4)} (Disconnect)
         </button>
@@ -48,13 +52,34 @@ export default function ConnectWallet({ onConnect }) {
     );
   }
 
+  const metamaskConnector = connectors.find(c => c.name === "MetaMask");
+
   return (
-    <button
-      onClick={() => connect()}
-      disabled={isLoading}
-      className="px-6 py-3 rounded-xl text-white shadow-lg bg-pink-500 hover:bg-pink-600 transition"
-    >
-      {isLoading ? "Connecting…" : "Connect Wallet"}
-    </button>
+    <>
+      {metamaskConnector && (
+        <button
+          onClick={() => connect({ connector: metamaskConnector })}
+          disabled={isPending}
+          className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700"
+        >
+          {isPending ? "Connecting..." : "Connect Wallet"}
+        </button>
+      )}
+
+      {/* ✅ Error toast */}
+      {errorMessage &&
+        createPortal(
+          <div className="fixed top-20 right-6 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg text-sm z-50 animate-fadeIn">
+            {errorMessage}
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="ml-3 text-xs underline"
+            >
+              Dismiss
+            </button>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
