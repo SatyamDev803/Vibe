@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @db.VarChar(42)   // wallet address
+  twitterHandle   String?
+  createdAt       DateTime @default(now())
+
+  // Daily swipe funnel
+  dailySwipeCount Int      @default(0)
+  lastSwipeDate   DateTime @default(now())
+
+  // Premium subscription (synced from contract event)
+  premiumUntil    DateTime?  
+
+  // Relations
+  likesGiven      Like[]   @relation("Liker")
+  likesReceived   Like[]   @relation("Liked")
+  matchesA        Match[]  @relation("A")
+  matchesB        Match[]  @relation("B")
+  messages        Message[]
+  premiumPayments PremiumPayment[]
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  liker     User     @relation("Liker", fields: [likerId], references: [id])
+  likerId   String   @db.VarChar(42)
+  liked     User     @relation("Liked", fields: [likedId], references: [id])
+  likedId   String   @db.VarChar(42)
+  createdAt DateTime @default(now())
+
+  @@index([likerId, likedId])
+  @@unique([likerId, likedId])
+}
+
+model Match {
+  id        Int      @id @default(autoincrement())
+  a         User     @relation("A", fields: [aId], references: [id])
+  aId       String   @db.VarChar(42)
+  b         User     @relation("B", fields: [bId], references: [id])
+  bId       String   @db.VarChar(42)
+  createdAt DateTime @default(now())
+
+  // enforce unique unordered pairs
+  @@unique([aId, bId])
+  messages  Message[]
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  match     Match    @relation(fields: [matchId], references: [id])
+  matchId   Int
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  String   @db.VarChar(42)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+}
+
+model PremiumPayment {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.VarChar(42)
+  txHash    String   @unique     // blockchain tx hash for audit
+  amount    Float    // should be 0.005 BNB
+  expiry    DateTime // expiry after 30 days
+  createdAt DateTime @default(now())
+}
