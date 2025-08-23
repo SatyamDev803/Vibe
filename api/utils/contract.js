@@ -1,5 +1,5 @@
 import pkg from "hardhat";
-import artifact from "../../artifacts/contracts/UserProfile.sol/UserProfile.json" assert { type: "json" };
+import artifact from "../../artifacts/contracts/UserProfile.sol/UserProfile.json" with { type: "json" };
 import { ethers } from "ethers";
 
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
