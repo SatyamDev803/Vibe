@@ -1,12 +1,83 @@
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Vibe
 
-Currently, two official plugins are available:
+Vibe is a decentralized social platform built with React, Vite, and Solidity, enabling users to connect, chat, and match on the Binance Smart Chain (BSC) testnet. The app features wallet-based authentication, on-chain profile management, premium upgrades, and secure chat moderation.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Decentralized User Profiles:** Create and update profiles stored on-chain via smart contracts.
+- **Wallet Authentication:** Connect with MetaMask or other wallets for secure login.
+- **Matching & Likes:** Swipe, like, and match with other users; matches are recorded both in the database and on-chain.
+- **Premium Membership:** Upgrade to premium for exclusive features (Superlike Boosts, Profile Spotlight, Unlimited Likes, and more) by paying a small BNB fee.
+- **Chat & Moderation:** Real-time chat with built-in moderation for safe conversations.
+- **File Storage:** Profile images and other assets are stored using BNB Greenfield decentralized storage.
+- **Modern UI:** Responsive design with Tailwind CSS and dark mode support.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Technologies Used
+
+- **Frontend:** React, Vite, Tailwind CSS, Wagmi, ethers.js, framer-motion
+- **Smart Contracts:** Solidity (UserProfile.sol), Hardhat
+- **Backend:** Node.js, Express, Prisma ORM, SQLite/PostgreSQL
+- **Storage:** BNB Greenfield
+- **Authentication:** MetaMask, WalletConnect
+- **APIs:** RESTful endpoints for profile, matching, chat moderation, and storage
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js & npm
+- MetaMask (browser extension)
+- BNB Testnet funds (for premium features)
+- Hardhat (for contract deployment)
+
+### Installation
+
+```bash
+git clone https://github.com/SatyamDev803/Vibe.git
+cd Vibe
+npm install
+```
+
+### Environment Setup
+
+Create a `.env` file with the following variables:
+
+```
+PRIVATE_KEY=your_wallet_private_key
+BNB_TESTNET_RPC=https://data-seed-prebsc-1-s1.binance.org:8545/
+CONTRACT_ADDRESS=deployed_contract_address
+VITE_CONTRACT_ADDRESS=deployed_contract_address
+VITE_GNFD_CHAIN_ID=your_chain_id
+VITE_GNFD_NODE_URL=your_node_url
+VITE_GF_PRIMARY_SP=your_primary_sp
+```
+
+### Running Locally
+
+1. **Deploy Smart Contract:**
+	```bash
+	npx hardhat run scripts/deploy.js --network bsctestnet
+	```
+2. **Start Backend:**
+	```bash
+	node api/index.js
+	```
+3. **Start Frontend:**
+	```bash
+	npm run dev
+	```
+
+Access the app at `http://localhost:5173`.
+
+## Project Structure
+
+- `src/` — React frontend
+- `contracts/` — Solidity smart contracts
+- `api/` — Express backend & API routes
+- `prisma/` — Database schema & migrations
+- `scripts/` — Deployment scripts
+
+## License
+
+This project is licensed under the MIT License.
